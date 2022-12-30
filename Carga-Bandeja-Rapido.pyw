@@ -2,8 +2,8 @@ from selenium import webdriver
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.common.by import By
 from selenium.webdriver.chrome.service import Service
-from selenium.webdriver.support import expected_conditions as ec
-from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
+from selenium.webdriver.support.wait import WebDriverWait
 from selenium.webdriver.support.ui import Select
 from selenium.webdriver import ActionChains
 from bs4 import BeautifulSoup
@@ -27,30 +27,30 @@ vector = []
 path = "/chromedriver.exe"
 Service = Service(executable_path=path)
 driver = webdriver.Chrome(service=Service)
+wait = WebDriverWait(driver, 5)
 # driver.maximize_window()
 driver.minimize_window()
+# ------------------------------- loggin -----
 driver.get("http://jvelazquez:Nacho123-@crm.telecentro.local/MembersLogin.aspx")
-time.sleep(1)
 
-driver.find_element(
-    by="xpath", value='//*[@id="txtPassword"]').send_keys("Nacho123-")
+wait.until(EC.element_to_be_clickable(
+    (By.XPATH, '//*[@id="txtPassword"]'))).send_keys("Nacho123-")
 
-driver.find_element(
-    by="xpath", value='//*[@id="btnAceptar"]').send_keys(Keys.RETURN)
+wait.until(EC.element_to_be_clickable(
+    (By.XPATH, '//*[@id="btnAceptar"]'))).click()
 
-time.sleep(1)
+# -------------------------------Bandeja de Cierre de Relevamiento-----
 
 driver.get(
     "http://crm.telecentro.local/Edificio/Gt_Edificio/BandejaEntradaDeRelevamiento.aspx?TituloPantalla=Descarga%20De%20Relevamiento&EstadoGestionId=5&TipoGestionId=3&TipoGestion=OPERACIONES%20DE%20RED%20-%20CIERRE%20DE%20RELEVAMIENTO")
 
+wait.until(EC.element_to_be_clickable(
+    (By.XPATH, '//*[@id="btnBuscar"]'))).click()
+
+wait.until(EC.presence_of_element_located(
+    (By.XPATH, '/html/body/form/div[4]/div[4]/table[1]/tbody/tr[10]/td/table/tbody/tr/td/div/div/div/table')))
 time.sleep(1)
 
-driver.find_element(
-    by="xpath", value='//*[@id="btnBuscar"]').send_keys(Keys.RETURN)
-
-time.sleep(3)
-
-# -------------------------------Bandeja de Cierre de Relevamiento-----
 tabla = driver.find_element(
     by="xpath", value='/html/body/form/div[4]/div[4]/table[1]/tbody/tr[10]/td/table/tbody/tr/td/div/div/div/table')
 filas1 = len(driver.find_elements(
@@ -135,7 +135,10 @@ columna = 0
 
 driver.get(
     "http://crm.telecentro.local/Edificio/Gt_Edificio/BandejaEntradaDeRelevamiento.aspx?TituloPantalla=CIERRE%20DE%20RELEVAMIENTO&EstadoGestionId=303&TipoGestionId=6&TipoGestion=RECONVERSION%20TECNOLOGICA%20-%20CIERRE%20DE%20RELEVAMIENTO")
-time.sleep(5)
+
+wait.until(EC.presence_of_element_located(
+    (By.XPATH, '/html/body/form/div[4]/div[4]/table[1]/tbody/tr[10]/td/table/tbody/tr/td/div/div/div/table')))
+time.sleep(1)
 
 tabla2 = driver.find_element(
     by="xpath", value='/html/body/form/div[4]/div[4]/table[1]/tbody/tr[10]/td/table/tbody/tr/td/div/div/div/table')
@@ -228,13 +231,17 @@ hora_formateada = hora_actual.strftime('%H:%M:%S')
 # ------------------------------- Bandeja de Pendiente de Relevamiento ----------
 driver.get(
     "http://crm.telecentro.local/Edificio/Gt_Edificio/BandejaEntradaDeRelevamiento.aspx?TituloPantalla=Pendiente%20De%20Relevamiento&EstadoGestionId=4&TipoGestionId=3&TipoGestion=OPERACIONES%20DE%20RED%20-%20PENDIENTE%20DE%20RELEVAMIENTO")
-time.sleep(5)
+wait.until(EC.presence_of_element_located(
+    (By.XPATH, '//*[@id="ctl00_ContentBody_grGestionTecEdificio"]/div/table/tbody/tr')))
+time.sleep(1)
 filas3 = len(driver.find_elements(
     by="xpath", value='//*[@id="ctl00_ContentBody_grGestionTecEdificio"]/div/table/tbody/tr'))
 # ------------------------------- Bandeja de Analisis de Factibilidad ----------
 driver.get(
     "http://crm.telecentro.local/Edificio/Gt_Edificio/BandejaEntradaDeRelevamiento.aspx?TituloPantalla=An%c3%a1lisis%20De%20Factibilidad&EstadoGestionId=6&TipoGestionId=3&TipoGestion=OPERACIONES%20DE%20RED%20-%20ANALISIS%20DE%20FACTIBILIDAD")
-time.sleep(5)
+wait.until(EC.presence_of_element_located(
+    (By.XPATH, '//*[@id="ctl00_ContentBody_grGestionTecEdificio"]/div/table/tbody/tr')))
+time.sleep(1)
 filas4 = len(driver.find_elements(
     by="xpath", value='//*[@id="ctl00_ContentBody_grGestionTecEdificio"]/div/table/tbody/tr'))
 
@@ -254,6 +261,8 @@ df = pd.DataFrame(serie.values.reshape(filasTotal, 20))
 df.columns = ["N", "Gestion", "ID", "Nodo", "Zona", "Prioridad", "Direccion", "Localidad", "Subtipo", "Ult Visita", "Estado Edificio",
               "Cant Gestiones", "Usuario", "Contratista", "Bandeja Previa", "Observacion", "Observacion Anterior", "Nodo Gpon", "Dias Faltantes", "Dias Retraso"]
 print(df)
+
+driver.quit()
 
 # ------------------------- Subir a Google Sheet -----------------------------
 
@@ -277,6 +286,7 @@ hoja.update([df.columns.values.tolist()] + df.values.tolist())
 
 
 # ------------------------------------
+
 
 """
 
